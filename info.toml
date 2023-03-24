@@ -1,0 +1,9 @@
+[meta]
+name = "GigaChad Collector"
+author = "sgt_bigbird"
+category = "Data Collection"
+version = "0.0.1"
+
+[script]
+dependencies = [ "VehicleState", "Camera" ]
+timeout = 0

@@ -134,6 +134,8 @@ class Logger {
         nvg::Text(pos, tostring(Time::get_Now()) + "\t\t\t\t\tcurrent time");
         pos.y += SPACING;
         nvg::Text(pos, Text::Format("%.3f", curPoint.p_dt) + "\t\t\t\t\tcurrent dt");
+        pos.y += SPACING;
+        nvg::Text(pos, tostring(curPoint.inputBrake) + "\t\t\t\t\tbraking");
         nvg::Stroke();
         nvg::ClosePath();
 

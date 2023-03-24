@@ -5,10 +5,10 @@ int NUM_POINTS_RECORDED = 500;
 int EXTRA_FRAMES = 30;
 
 [Setting category="Display" name="Graph Width" drag min=50 max=2000]
-int graph_width = 500;
+int graph_width = 380;
 
 [Setting category="Display" name="Graph Height" drag min=50 max=1000]
-int graph_height = 165;
+int graph_height = 180;
 
 [Setting category="Display" name="Graph X Offset" drag min=0 max=4000]
 int graph_x_offset = 32;
@@ -29,7 +29,7 @@ vec4 BorderColor = vec4(0, 0, 0, 1);
 float BorderWidth = 1.0f;
 
 [Setting category="Display" name="Line spacing" drag min=8 max=32]
-int SPACING = 16;
+int SPACING = 18;
 
 [Setting category="General" name="Enabled"]
 bool enabled = false;

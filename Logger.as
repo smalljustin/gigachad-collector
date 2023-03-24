@@ -52,11 +52,20 @@ class Logger {
         idx += 1;
         @prevPoint = @curPoint;
 
-        handleFileFlush();
+        printLength();
+        // handleFileFlush();
+        handleNetworkFlush();
         renderHud();
         handleMapAndPlayerCheck();
     }
 
+    void printLength() {
+        int count = 0; 
+        for (int i = 0; i < pendingJsonOut.Length; i++) {
+            count += pendingJsonOut[i].Length;
+        }
+        print("Total length: " + tostring(count));
+    }
     void handleFileFlush() {
         if (didPlayerJustRespawn() && pendingJsonOut.Length > 0) {
             string filename = "gcc_out_" + Time::get_Now() + ".json";
@@ -65,6 +74,27 @@ class Logger {
             Json::ToFile(path, pendingJsonOut);
             pendingJsonOut = Json::Array();
         }
+    }
+
+    void handleNetworkFlush() {
+        if (didPlayerJustRespawn() && pendingJsonOut.Length > 0) {
+            startnew(CoroutineFunc(this.submitData));
+        }
+    }
+
+    void submitData() {
+        string url = "http://localhost:8080/datapoint";
+        print("Serlizing and pushing! Current time: " + tostring(Time::get_Now()));
+        string data = Json::Write(pendingJsonOut);
+        print("Serlized! Current time: " + tostring(Time::get_Now()) + "\t Length: " + tostring(data.Length));
+        pendingJsonOut = Json::Array();
+        Net::HttpPost(
+            url,
+            data,
+            "application/json"
+        );
+        print("Pushed! Current time: " + tostring(Time::get_Now()));
+        pendingJsonOut = Json::Array();
     }
 
     CSmArenaClient@ getPlayground() {

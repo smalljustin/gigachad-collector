@@ -14,7 +14,19 @@ class Logger {
     int startIdx = 0;
     bool isGearChange = false;
 
+    void handleMapAndPlayerCheck() {
+        string curMapUuid = getMapUid();
+        if (curMapUuid == "") {
+            enabled = false;
+        }
+    }
+
     void logAndRender() {
+        if (!enabled) {
+            return;
+        }
+
+
         @curPoint = DataPoint(getVisState());
         // print(prevPoint.curGear);
         if (prevPoint != null && curPoint.curGear != prevPoint.curGear) {
@@ -42,10 +54,11 @@ class Logger {
 
         handleFileFlush();
         renderHud();
+        handleMapAndPlayerCheck();
     }
 
     void handleFileFlush() {
-        if (didPlayerJustRespawn()) {
+        if (didPlayerJustRespawn() && pendingJsonOut.Length > 0) {
             string filename = "gcc_out_" + Time::get_Now() + ".json";
             string path = IO::FromStorageFolder(filename);
             print("Writing to file " + path);

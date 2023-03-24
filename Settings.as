@@ -30,3 +30,6 @@ float BorderWidth = 1.0f;
 
 [Setting category="Display" name="Line spacing" drag min=8 max=32]
 int SPACING = 16;
+
+[Setting category="General" name="Enabled"]
+bool enabled = false;

@@ -104,13 +104,13 @@ class Logger {
         nvg::FillColor(vec4(.9, .9, .9, 1));
         nvg::Text(pos, tostring(curPoint.curGear) + "\t\t\t\t\tgear");
         pos.y += SPACING;
-        nvg::Text(pos, Text::Format("%.5f", curPoint.left_slip) + "\t\t\t\t\tleft slip");
+        nvg::Text(pos, Text::Format("%.2f", Math::ToDeg(curPoint.left_slip)) + "\t\t\t\t\tleft slip");
         pos.y += SPACING;
-        nvg::Text(pos, Text::Format("%.5f", curPoint.dir_slip) + "\t\t\t\t\tdir slip");
+        nvg::Text(pos, Text::Format("%.2f", Math::ToDeg(curPoint.dir_slip)) + "\t\t\t\t\tdir slip");
         pos.y += SPACING;
-        nvg::Text(pos, Text::Format("%.5f", curPoint.frontspeed) + "\t\t\t\t\tfrontspeed");
+        nvg::Text(pos, Text::Format("%.2f", curPoint.frontspeed) + "\t\t\t\t\tfrontspeed");
         pos.y += SPACING;
-        nvg::Text(pos, Text::Format("%.5f", curPoint.velocity.Length()) + "\t\t\t\t\tvelocity");
+        nvg::Text(pos, Text::Format("%.2f", curPoint.velocity.Length()) + "\t\t\t\t\tvelocity");
         pos.y += SPACING;
         nvg::Text(pos,
             Text::Format("%.3f", curPoint.flDamperLen * 100) + ", " + 

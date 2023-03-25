@@ -1,5 +1,10 @@
+/* globals */
+
+string activeRespawnId;
+string activeRunId;
+
 class Logger {
-    int current_run_starttime;
+    int currentRunStartTime;
     Json::Value@ pendingJsonOut = Json::Array();
     array<DataPoint@> dataPointArray(5000);
 
@@ -9,7 +14,6 @@ class Logger {
     DataPoint@ prevPoint;
     DataPoint@ curPoint;
     
-
     int idx = 0; 
     int startIdx = 0;
     bool isGearChange = false;
@@ -28,10 +32,16 @@ class Logger {
 
 
         @curPoint = DataPoint(getVisState());
+
+        if (curPoint.velocity.LengthSquared() < 1) {
+            return;
+        }
+
         // print(prevPoint.curGear);
         if (prevPoint != null && curPoint.curGear != prevPoint.curGear) {
             startIdx = isGearChange ? startIdx : idx;
             isGearChange = true;
+            activeRunId = Crypto::RandomBase64(32);
         }
 
         @dataPointArray[idx % NUM_POINTS_RECORDED] = curPoint;
@@ -39,10 +49,13 @@ class Logger {
         if (isGearChange && idx == startIdx + EXTRA_FRAMES) {
             // flush 
             Json::Value@ outArray = Json::Array();
+            int pidx = idx % NUM_POINTS_RECORDED;
             for (int i = 0; i < NUM_POINTS_RECORDED; i++) {
-                if (dataPointArray[i] != null) {
-                    outArray.Add(dataPointArray[i].toJson());
+                if (dataPointArray[pidx] != null) {
+                    dataPointArray[pidx].pidx = i - EXTRA_FRAMES;
+                    outArray.Add(dataPointArray[pidx].toJson());
                 }
+                pidx = (pidx + NUM_POINTS_RECORDED - 1) % NUM_POINTS_RECORDED;
             }
             pendingJsonOut.Add(outArray);
             isGearChange = false;
@@ -53,7 +66,6 @@ class Logger {
         @prevPoint = @curPoint;
 
         printLength();
-        // handleFileFlush();
         handleNetworkFlush();
         renderHud();
         handleMapAndPlayerCheck();
@@ -64,7 +76,6 @@ class Logger {
         for (int i = 0; i < pendingJsonOut.Length; i++) {
             count += pendingJsonOut[i].Length;
         }
-        print("Total length: " + tostring(count));
     }
     void handleFileFlush() {
         if (didPlayerJustRespawn() && pendingJsonOut.Length > 0) {
@@ -82,19 +93,32 @@ class Logger {
         }
     }
 
+
     void submitData() {
-        string url = "http://localhost:8080/datapoint";
+        string url = url_base + "datapoint";
         print("Serlizing and pushing! Current time: " + tostring(Time::get_Now()));
-        string data = Json::Write(pendingJsonOut);
+        
+        Json::Value@ out_obj = Json::Object();
+        out_obj["data"] = pendingJsonOut;
+        out_obj["token"] = token_uuid;
+
+        string data = Json::Write(out_obj);
         print("Serlized! Current time: " + tostring(Time::get_Now()) + "\t Length: " + tostring(data.Length));
         pendingJsonOut = Json::Array();
-        Net::HttpPost(
-            url,
-            data,
-            "application/json"
-        );
-        print("Pushed! Current time: " + tostring(Time::get_Now()));
-        pendingJsonOut = Json::Array();
+
+        Net::HttpRequest@ request = Net::HttpPost(url, data, "application/json");
+        while (!request.Finished()) {
+            yield();
+        }
+
+        if (request.ResponseCode() == 200) {
+            print("Pushed! Current time: " + tostring(Time::get_Now()));
+            pendingJsonOut = Json::Array();
+        } else {
+            Authenticate();
+            submitData();
+        }
+
     }
 
     CSmArenaClient@ getPlayground() {
@@ -117,17 +141,18 @@ class Logger {
 
     int getPlayerStartTime() {
         if (getPlayer() is null) {
-            return current_run_starttime + 1;
+            return currentRunStartTime + 1;
         }
         return getPlayer().StartTime;
     }
 
     bool didPlayerJustRespawn() {
-        if (getPlayerStartTime() == current_run_starttime) {
+        if (getPlayerStartTime() == currentRunStartTime) {
             // Continuing a run. 
             return false;
         } else {
-            current_run_starttime = getPlayerStartTime();
+            currentRunStartTime = getPlayerStartTime();
+            activeRespawnId = Crypto::RandomBase64(32);
             return true;
         }
     }
@@ -147,9 +172,9 @@ class Logger {
         nvg::FillColor(vec4(.9, .9, .9, 1));
         nvg::Text(pos, tostring(curPoint.curGear) + "\t\t\t\t\tgear");
         pos.y += SPACING;
-        nvg::Text(pos, Text::Format("%.2f", Math::ToDeg(curPoint.left_slip)) + "\t\t\t\t\tleft slip");
+        nvg::Text(pos, Text::Format("%.2f", RADIANS ? curPoint.left_slip : Math::ToDeg(curPoint.left_slip)) + "\t\t\t\t\tleft slip");
         pos.y += SPACING;
-        nvg::Text(pos, Text::Format("%.2f", Math::ToDeg(curPoint.dir_slip)) + "\t\t\t\t\tdir slip");
+        nvg::Text(pos, Text::Format("%.2f", RADIANS ? curPoint.dir_slip : Math::ToDeg(curPoint.dir_slip)) + "\t\t\t\t\tdir slip");
         pos.y += SPACING;
         nvg::Text(pos, Text::Format("%.2f", curPoint.frontspeed) + "\t\t\t\t\tfrontspeed");
         pos.y += SPACING;

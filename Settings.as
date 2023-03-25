@@ -33,3 +33,6 @@ int SPACING = 18;
 
 [Setting category="General" name="Enabled"]
 bool enabled = false;
+
+[Setting category="Display" name="Show angles in radians"]
+bool RADIANS = false;

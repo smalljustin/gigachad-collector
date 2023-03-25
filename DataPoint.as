@@ -2,6 +2,8 @@ class DataPoint {
     int version = 1;
 
     DataPoint() {}
+
+    int pidx;
     
     vec3 position; 
     vec3 velocity;
@@ -27,7 +29,9 @@ class DataPoint {
     uint curGear;
     uint64 time;
     float p_dt;
-    
+    string p_activeRespawnId;
+    string p_activeRunId;
+
     EPlugSurfaceMaterialId flGroundContactMaterial;
     EPlugSurfaceMaterialId frGroundContactMaterial;
     EPlugSurfaceMaterialId rlGroundContactMaterial;
@@ -69,14 +73,25 @@ class DataPoint {
         left_slip = Math::Angle(visState.Left, v);
         time = Time::get_Now();
         p_dt = g_dt;
+        p_activeRespawnId = activeRespawnId;
+        p_activeRunId = activeRunId;
+    }
+
+    float pp(float v) {
+        if (Math::IsNaN(v) || Math::IsNaN(-v) || Math::IsInf(v) || Math::IsInf(-v)) {
+            return -100;
+        } return v;
     }
 
     Json::Value@ toJson() {
+        vec3 vel_norm = velocity.Normalized();
         Json::Value@ json = Json::Object();
+        json["pidx"] = pidx;
         json["version"] = version;
         json["position"] = tostring(position);
         json["velocity"] = tostring(velocity);
-        json["frontspeed"] = frontspeed;
+        json["speed"] = velocity.Length();
+        json["frontSpeed"] = frontspeed;
         json["inputSteer"] = inputSteer;
         json["inputBrake"] = inputBrake;
         json["inputGas"] = inputGas;
@@ -84,10 +99,12 @@ class DataPoint {
         json["frDamperLen"] = frDamperLen;
         json["rlDamperLen"] = rlDamperLen;
         json["rrDamperLen"] = rrDamperLen;
-        json["vec_vel"] = tostring(vec_vel);
-        json["vec_dir"] = tostring(vec_dir);
-        json["vec_left"] = tostring(vec_left);
-        json["vec_up"] = tostring(vec_up);
+        json["vecVel"] = tostring(vec_vel);
+        json["vecDir"] = tostring(vec_dir);
+        json["vecLeft"] = tostring(vec_left);
+        json["vecUp"] = tostring(vec_up);
+        json["slipDir"] = pp(dir_slip);
+        json["slipLeft"] = pp(left_slip);
         json["curGear"] = curGear;
         json["flGroundContactMaterial"] = tostring(flGroundContactMaterial);
         json["frGroundContactMaterial"] = tostring(frGroundContactMaterial);
@@ -96,6 +113,8 @@ class DataPoint {
         json["reactor"] = reactor;
         json["time"] = Text::Format("%d", time);
         json["dt"] = p_dt;
+        json["runId"] = p_activeRunId;
+        json["respawnId"] = p_activeRespawnId;
 
         return json;
     }

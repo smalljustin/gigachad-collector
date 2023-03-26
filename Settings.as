@@ -36,3 +36,6 @@ bool enabled = false;
 
 [Setting category="Display" name="Show angles in radians"]
 bool RADIANS = false;
+
+[Setting category="General" name="Disable network stuff"]
+bool DISABLE_NETWORK = true;

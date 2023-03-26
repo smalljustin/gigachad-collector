@@ -32,6 +32,11 @@ class Logger {
 
 
         @curPoint = DataPoint(getVisState());
+        renderHud();
+
+        if (DISABLE_NETWORK) {
+            return;
+        }
 
         if (curPoint.velocity.LengthSquared() < 1) {
             return;
@@ -67,7 +72,6 @@ class Logger {
 
         printLength();
         handleNetworkFlush();
-        renderHud();
         handleMapAndPlayerCheck();
     }
 

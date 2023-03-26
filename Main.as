@@ -46,6 +46,9 @@ void RenderMenu() {
 }
 
 void Authenticate() {
+  if (DISABLE_NETWORK) {
+    return;
+  }
   Auth::PluginAuthTask@ token = Auth::GetToken();
   while (!token.Finished()) {
     yield();

@@ -7,23 +7,14 @@ array<string> valid_runkeys;
 string new_runkeyname; 
 string query_runkey;
 int new_runkeymode = 1;
+string new_maptagname;
 
 array<RunKey> loaded_runkeys;
-RunKey active_runkey;
+array<MapTag> loaded_maptags;
+RunKey @active_runkey;
+MapTag @active_maptag;
 bool loadingRunkeys = false;
-
-class RunKey {
-    int rkId;
-    string name;
-    int mode;
-
-    RunKey() {}
-    RunKey(int in_rkId, string in_name, int in_mode) {
-        rkId = in_rkId;
-        name = in_name;
-        mode = in_mode;
-    }
-}
+bool loadingMaptags = false;
 
 class Logger {
     int currentRunStartTime;
@@ -45,7 +36,14 @@ class Logger {
         if (curMapUuid == "" || curMapUuid != activeMapUuid) {
             enabled = false;
             activeMapUuid = curMapUuid;
+            @active_maptag = null;
+            @active_runkey = null;
+            if (activeMapUuid.Length > 0) {
+                getActiveMapTags();
+                getActiveRunKeys();
+            }
         }
+
     }
 
     void handleMode1() {
@@ -239,8 +237,40 @@ class Logger {
         startnew(CoroutineFunc(this._getActiveRunKeys));
     }
 
+    void getActiveMapTags() {
+        startnew(CoroutineFunc(this._getActiveMapTags));
+    }
+
+    void _getActiveMapTags() {
+        while (token_uuid == "") {
+            yield();
+        }
+        if (loadingMaptags) {
+            return;
+        }
+
+        loadingMaptags = true;
+        string url = url_base + "maptag?token=" + token_uuid;
+        Net::HttpRequest@ request = Net::HttpGet(url);
+        while (!request.Finished()) {
+            yield();
+        }
+        if (request.ResponseCode() == 200) {
+            Json::Value@ obj = Json::Parse(request.String());
+            loaded_maptags = array<MapTag>();
+            for (int i = 0; i < obj.Length; i++) {
+                MapTag mt = MapTag(obj[i]["mtId"], obj[i]["mapUuid"], obj[i]["tag"], obj[i]["username"]);
+                loaded_maptags.InsertLast(mt);
+                if (mt.mapUuid == activeMapUuid) {
+                    @active_maptag = mt;
+                }
+            }
+        }
+        loadingMaptags = false;
+    }
+
     void _getActiveRunKeys() {
-        while (token_uuid == "" || token_uuid == "ERROR") {
+        while (token_uuid == "") {
             yield();
         }
         if (loadingRunkeys) {
@@ -267,7 +297,7 @@ class Logger {
     void findMatchingRunKey() {
         for (int i = 0; i < loaded_runkeys.Length; i++) {
             if (loaded_runkeys[i].name.Trim().ToLower() == query_runkey.Trim().ToLower()) {
-                active_runkey = loaded_runkeys[i];
+                @active_runkey = @loaded_runkeys[i];
                 return;
             }
         }
@@ -286,7 +316,7 @@ class Logger {
 
         for (int i = 0; i < loaded_runkeys.Length; i++) {
             if (loaded_runkeys[i].name.Trim().ToLower() == new_runkeyname.Trim().ToLower()) {
-                active_runkey = loaded_runkeys[i];
+                @active_runkey = @loaded_runkeys[i];
                 return;
             }
         }
@@ -308,26 +338,72 @@ class Logger {
         this.getActiveRunKeys();
     }
 
-    
-    
+    void saveNewMapTag() {
+        startnew(CoroutineFunc(this._saveNewMapTag));
+    }
+
+    void _saveNewMapTag() {
+        if (new_maptagname.Length < 3) {
+            new_maptagname = "";
+            return;
+        }
+        getActiveMapTags();
+
+        for (int i = 0; i < loaded_maptags.Length; i++) {
+            if (loaded_maptags[i].tag.Trim().ToLower() == new_maptagname.Trim().ToLower()) {
+                new_maptagname = loaded_maptags[i].tag;
+            }
+        }
+
+        string url = url_base + "maptag";
+        Json::Value@ out_obj = Json::Object();
+        out_obj["token"] = token_uuid;
+        Json::Value@ new_mapTag = Json::Object();
+        new_mapTag["mapUuid"] = activeMapUuid;
+        new_mapTag["tag"] = new_maptagname;
+        
+        out_obj["mapTag"] = new_mapTag;
+        string data = Json::Write(out_obj);
+        print("data: " + data);
+        Net::HttpRequest@ request = Net::HttpPost(url, data, "application/json");
+        while (!request.Finished()) {
+            yield();
+        }
+        this.getActiveMapTags();
+    }
+
     void renderRunkeyManagerHud() {
         if (SHOW_RUNKEY_MANAGER) {
-            if (token_uuid == "" || token_uuid == "ERROR") {
+            if (token_uuid == "") {
                 UI::Begin("Configure run keys");
                 UI::Text("Please wait, waiting for authentication.");
                 UI::End();
                 return;
             }
 
-            if (loaded_runkeys.Length == 0) {
-                getActiveRunKeys();
-            }
+            UI::Begin("Configure GigaChad Collector", UI::WindowFlags::AlwaysAutoResize);
+                if (UI::Button("Refresh loaded maptags")) {
+                    this.getActiveMapTags();
+                }
+                if (@active_maptag != null && active_maptag.mapUuid == activeMapUuid) {
+                    UI::Text("Map tag: " + active_maptag.tag);
+                } else {
+                    new_maptagname = UI::InputText("Map tag ", new_maptagname);
+                    if (UI::Button("Save new map tag", vec2(200, 30))) {
+                        this.saveNewMapTag();
+                    };
+                    UI::Text("Existing map tags:");
+                    for (int i = 0; i < loaded_maptags.Length; i++) {
+                        MapTag@ m = loaded_maptags[i];
+                        UI::Text(m.tag);
+                    }
+                }
 
-            UI::Begin("Configure run keys", UI::WindowFlags::AlwaysAutoResize);
-                            if (UI::Button("Refresh loaded runkeys")) {
+                if (UI::Button("Refresh loaded runkeys")) {
                     this.getActiveRunKeys();
                 }
-                if (active_runkey.rkId == 0) {
+
+                if (@active_runkey == null || active_runkey.rkId == 0) {
                     UI::Text("Please select a run key");
                 } else {
                     UI::Text("Active runkey: " + active_runkey.name + ", mode: " + active_runkey.mode + " (id: " + active_runkey.rkId + ")");
@@ -335,6 +411,7 @@ class Logger {
                     enabled = !enabled;
                 };
                 }
+
 
                 query_runkey = UI::InputText("Find an existing key", query_runkey);
                 if (UI::Button("Find existing key", vec2(200, 30))) {
@@ -355,8 +432,6 @@ class Logger {
                 if (UI::Button("Create new run key", vec2(200, 30))) {
                     this.saveNewRunKey();
                 };
-
-
 
                 for (int i = 0; i < loaded_runkeys.Length; i++) {
                      UI::Text(loaded_runkeys[i].name);

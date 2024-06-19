@@ -38,6 +38,8 @@ class DataPoint {
     EPlugSurfaceMaterialId rrGroundContactMaterial;
     ESceneVehicleVisReactorBoostType reactor;
 
+    VehicleState::VehicleType activeVehicleType;
+
     DataPoint(CSceneVehicleVisState@ visState) {
         if (visState is null) {
             return;
@@ -61,6 +63,8 @@ class DataPoint {
         vec_dir = visState.Dir;
         vec_left = visState.Left;
         vec_up = visState.Up;
+
+        activeVehicleType = VehicleState::GetVehicleType(visState);
 
         flGroundContactMaterial = visState.FLGroundContactMaterial;
         frGroundContactMaterial = visState.FRGroundContactMaterial;
@@ -86,6 +90,8 @@ class DataPoint {
     Json::Value@ toJson() {
         vec3 vel_norm = velocity.Normalized();
         Json::Value@ json = Json::Object();
+        json["mapUuid"] = activeMapUuid;
+        json["vehicleType"] = activeVehicleType;
         json["pidx"] = pidx;
         json["version"] = version;
         json["position"] = tostring(position);

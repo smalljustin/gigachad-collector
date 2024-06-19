@@ -57,24 +57,21 @@ void Authenticate() {
     yield();
   }
   print("Token: " + token.Token());
-
-  string url = url_base + "auth" + "?secret=" + token.Token();
-  
+  string url = url_base + "auth";
   print(url);
-  Net::HttpRequest request;
-  request.Url = url;
-  request.Method = Net::HttpMethod::Get;
+  Json::Value@ auth_out = Json::Object();
+  auth_out["secret"] = token.Token();
+  Net::HttpRequest@ request = Net::HttpPost(url, Json::Write(auth_out), "application/json");
 
-  request.Start();
   while (!request.Finished()) yield();
-  token_uuid = request.String();
   sleep(3000);
-  if (request.ResponseCode() != 200 || token_uuid == "ERROR") {
+  if (request.ResponseCode() != 200) {
     error("Couldn't authenticate! Trying again in 10 seconds...");
     sleep(1000);
     auth_errors += 1;
     Authenticate();
   } else {
+    token_uuid = request.String();
     print("Authenticate with uuid " + token_uuid);
   }
 }

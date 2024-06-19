@@ -1,5 +1,5 @@
 class DataPoint {
-    int version = 1;
+    int version = 4;
 
     DataPoint() {}
 

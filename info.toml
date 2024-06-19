@@ -3,6 +3,7 @@ name = "GigaChad Collector"
 author = "sgt_bigbird"
 category = "Data Collection"
 version = "0.0.1"
+siteid = 353
 
 [script]
 dependencies = [ "VehicleState", "Camera" ]

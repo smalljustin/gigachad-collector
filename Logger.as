@@ -392,10 +392,13 @@ class Logger {
                     if (UI::Button("Save new map tag", vec2(200, 30))) {
                         this.saveNewMapTag();
                     };
-                    UI::Text("Existing map tags:");
-                    for (int i = 0; i < loaded_maptags.Length; i++) {
-                        MapTag@ m = loaded_maptags[i];
-                        UI::Text(m.tag);
+
+                    if (SHOW_MAPTAG_LIST) {
+                        UI::Text("Existing map tags:");
+                        for (int i = 0; i < loaded_maptags.Length; i++) {
+                            MapTag@ m = loaded_maptags[i];
+                            UI::Text(m.tag);
+                        }
                     }
                 }
 
@@ -421,12 +424,9 @@ class Logger {
                 UI::Text("Create a new run key:");
                 UI::Text("Values for 'mode':");
                 UI::Text("1: 'snip' on respawn (default)");
-                UI::Text("2: 'snip' on gear change (default)");
+                UI::Text("2: 'snip' on gear change");
 
                 new_runkeyname = UI::InputText("New run key name", new_runkeyname);
-                if (UI::Button("Set run key", vec2(200, 30))) {
-                    this.saveNewRunKey();
-                };
                 new_runkeymode = UI::InputInt("New run key mode", new_runkeymode);
 
                 if (UI::Button("Create new run key", vec2(200, 30))) {

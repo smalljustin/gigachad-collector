@@ -91,7 +91,7 @@ class DataPoint {
         vec3 vel_norm = velocity.Normalized();
         Json::Value@ json = Json::Object();
         json["mapUuid"] = activeMapUuid;
-        json["vehicleType"] = activeVehicleType;
+        json["vehicleType"] = tostring(activeVehicleType);
         json["pidx"] = pidx;
         json["version"] = version;
         json["position"] = tostring(position);

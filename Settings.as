@@ -43,3 +43,6 @@ bool RADIANS = false;
 
 [Setting category="General" name="Show runkey manager"]
 bool SHOW_RUNKEY_MANAGER = false;
+
+[Setting category="General" name="Show pre-existing map tags"]
+bool SHOW_MAPTAG_LIST = false;

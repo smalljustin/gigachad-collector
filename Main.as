@@ -2,9 +2,10 @@ Logger @ logger;
 float g_dt;
 string token_uuid;
 int auth_errors;
-string url_base = "http://localhost:8080/";
-// string url_base = "http://76.141.66.18:15323/";
+string url_prod = "http://gigachad.justinjschmitz.com:21532/";
+string url_dev = "http://localhost:8080/";
 
+string url_base = url_prod;
 
 CSceneVehicleVisState@ getVisState() {
     return VehicleState::ViewingPlayerState();

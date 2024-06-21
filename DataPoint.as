@@ -18,6 +18,11 @@ class DataPoint {
     float rlDamperLen;
     float rrDamperLen;
 
+    float flIcing01;
+    float frIcing01;
+    float rlIcing01;
+    float rrIcing01;
+
     vec3 vec_vel;
     vec3 vec_dir; 
     vec3 vec_left; 
@@ -72,6 +77,11 @@ class DataPoint {
         rrGroundContactMaterial = visState.RRGroundContactMaterial; 
         reactor = visState.ReactorBoostType;
 
+        flIcing01 = visState.FLIcing01;
+        frIcing01 = visState.FRIcing01;
+        rlIcing01 = visState.RLIcing01;
+        rrIcing01 = visState.RRIcing01;
+
         vec3 v = visState.WorldVel.Normalized();
         dir_slip = Math::Angle(visState.Dir, v);
         left_slip = Math::Angle(visState.Left, v);
@@ -105,6 +115,10 @@ class DataPoint {
         json["frDamperLen"] = frDamperLen;
         json["rlDamperLen"] = rlDamperLen;
         json["rrDamperLen"] = rrDamperLen;
+        json["flIcing01"] = flIcing01;
+        json["frIcing01"] = frIcing01;
+        json["rlIcing01"] = rlIcing01;
+        json["rrIcing01"] = rrIcing01;
         json["vecVel"] = tostring(vec_vel);
         json["vecDir"] = tostring(vec_dir);
         json["vecLeft"] = tostring(vec_left);
